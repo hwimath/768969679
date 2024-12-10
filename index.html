@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>휘매쓰 연산 챌린지!</title>
+    <!-- MathJax 로드 -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+    <style>
+        /* 기본 스타일 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #4CAF50;
+            width: 100%;
+            padding: 15px;
+            text-align: center;
+            color: white;
+            font-size: 1.5em;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 95%;
+            max-width: 600px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 난이도 선택 버튼 스타일 */
+        .difficulty-selection button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            color: white;
+        }
+
+        .difficulty-selection button:hover {
+            opacity: 0.9;
+        }
+
+        .difficulty-selection button:nth-child(1) { background-color: #ff4d4d; }
+        .difficulty-selection button:nth-child(2) { background-color: #ff944d; }
+        .difficulty-selection button:nth-child(3) { background-color: #ffda4d; color: black; }
+        .difficulty-selection button:nth-child(4) { background-color: #4CAF50; }
+
+        /* 게임 화면 스타일 */
+        .game-screen {
+            width: 100%;
+        }
+
+        .scoreboard, .chances, .total-time {
+            font-size: 1.2em;
+            margin: 5px 0;
+            text-align: center;
+        }
+
+        .energy-bar-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 25px;
+            overflow: hidden;
+            margin: 15px 0;
+            height: 20px;
+        }
+
+        .energy-bar {
+            height: 100%;
+            width: 100%;
+            background-color: #4CAF50;
+            transition: width 0.5s linear;
+        }
+
+        .question {
+            font-size: 1.3em;
+            margin: 15px 0;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .choices button {
+            padding: 12px;
+            margin: 8px 0;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .choices button:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* 결과 화면 스타일 */
+        #result-screen {
+            text-align: center;
+        }
+
+        #result-screen button {
+            padding: 12px 25px;
+            margin-top: 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        #result-screen button:hover {
+            background-color: #45a049;
+        }
+
+        /* 팝업 스타일 */
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .popup button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        .popup button:hover {
+            background-color: #45a049;
+        }
+
+        /* 모달 배경 */
+        .modal-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 600px) {
+            .question {
+                font-size: 1.2em;
+            }
+
+            .difficulty-selection button {
+                font-size: 0.9em;
+                padding: 12px;
+            }
+
+            .choices button {
+                font-size: 0.9em;
+                padding: 10px;
+            }
+
+            .scoreboard, .chances, .total-time {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>휘매쓰 연산 챌린지!</header>
+    <div class="container">
+        <!-- 시작 화면 -->
+        <div id="start-screen" class="game-screen">
+            <h2>난이도를 선택하세요</h2>
+            <div class="difficulty-selection">
+                <button data-difficulty="최상">최상 (20초)</button>
+                <button data-difficulty="상">상 (30초)</button>
+                <button data-difficulty="중">중 (40초)</button>
+                <button data-difficulty="하">하 (시간제한 없음)</button>
+            </div>
+        </div>
+
+        <!-- 게임 화면 -->
+        <div id="game-screen" class="game-screen hidden">
+            <div class="scoreboard">점수: <span id="score">0</span></div>
+            <div class="chances">남은 기회: <span id="chances">3</span></div>
+            <div class="total-time">전체 시간: <span id="total-time">00:00</span></div>
+            <div class="energy-bar-container">
+                <div id="energy-bar" class="energy-bar"></div>
+            </div>
+            <div class="question" id="question">질문이 여기에 표시됩니다.</div>
+            <div class="choices" id="choices">
+                <!-- 선택지가 여기에 표시됩니다 -->
+            </div>
+        </div>
+
+        <!-- 결과 화면 -->
+        <div id="result-screen" class="game-screen hidden">
+            <h2>게임 종료!</h2>
+            <p>최종 점수: <span id="final-score">0</span></p>
+            <button id="restart-button">다시 시작하기</button>
+        </div>
+    </div>
+
+    <!-- 팝업 -->
+    <div id="popup" class="popup hidden">
+        <p id="popup-message">팝업 메시지</p>
+        <button onclick="closePopup()">확인</button>
+    </div>
+    <div id="modal-bg" class="modal-bg"></div>
+
+    <script>
+        // 모든 문제와 답을 포함한 데이터 (유형1, 유형2, 유형3 총 60문제)
+        const problems = [
+            // 유형1: 어떤 수에서 A를 빼야 할 것을 잘못하여 A를 더했을 때 B가 되는 문제
+            // 바르게 계산한 값은 x - A = B - 2A
+            // 유형1 문제 1~20
+            {id:1, type:1, expression: '어떤 수에서 150을 빼야 할 것을 잘못하여 더했더니 500이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '200'},
+            {id:2, type:1, expression: '어떤 수에서 220을 빼야 할 것을 잘못하여 더했더니 600이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '160'},
+            {id:3, type:1, expression: '어떤 수에서 175을 빼야 할 것을 잘못하여 더했더니 450이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '100'},
+            {id:4, type:1, expression: '어떤 수에서 130을 빼야 할 것을 잘못하여 더했더니 400이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '140'},
+            {id:5, type:1, expression: '어떤 수에서 200을 빼야 할 것을 잘못하여 더했더니 700이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '300'},
+            {id:6, type:1, expression: '어떤 수에서 185을 빼야 할 것을 잘못하여 더했더니 550이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '180'},
+            {id:7, type:1, expression: '어떤 수에서 240을 빼야 할 것을 잘못하여 더했더니 800이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '320'},
+            {id:8, type:1, expression: '어떤 수에서 160을 빼야 할 것을 잘못하여 더했더니 520이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '200'},
+            {id:9, type:1, expression: '어떤 수에서 210을 빼야 할 것을 잘못하여 더했더니 630이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '210'},
+            {id:10, type:1, expression: '어떤 수에서 195을 빼야 할 것을 잘못하여 더했더니 585이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '195'},
+            {id:11, type:1, expression: '어떤 수에서 175을 빼야 할 것을 잘못하여 더했더니 525이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '175'},
+            {id:12, type:1, expression: '어떤 수에서 210을 빼야 할 것을 잘못하여 더했더니 700이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '280'},
+            {id:13, type:1, expression: '어떤 수에서 190을 빼야 할 것을 잘못하여 더했더니 760이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '380'},
+            {id:14, type:1, expression: '어떤 수에서 225을 빼야 할 것을 잘못하여 더했더니 675이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '225'},
+            {id:15, type:1, expression: '어떤 수에서 160을 빼야 할 것을 잘못하여 더했더니 480이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '160'},
+            {id:16, type:1, expression: '어떤 수에서 185을 빼야 할 것을 잘못하여 더했더니 555이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '185'},
+            {id:17, type:1, expression: '어떤 수에서 200을 빼야 할 것을 잘못하여 더했더니 800이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '400'},
+            {id:18, type:1, expression: '어떤 수에서 175을 빼야 할 것을 잘못하여 더했더니 525이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '175'},
+            {id:19, type:1, expression: '어떤 수에서 240을 빼야 할 것을 잘못하여 더했더니 720이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '240'},
+            {id:20, type:1, expression: '어떤 수에서 210을 빼야 할 것을 잘못하여 더했더니 630이 되었습니다. 바르게 계산한 값을 구하시오.', answer: '210'},
+
+            // 유형2: 어떤 수에서 A를 빼야 할 것을 잘못하여 A를 더했을 때 B가 되는 문제
+            // 수 = B - A
+            // 유형2 문제 1~20
+            {id:21, type:2, expression: '어떤 수에서 150을 빼야 할 것을 잘못하여 더했더니 500이 되었습니다. 어떤 수를 구하시오.', answer: '350'},
+            {id:22, type:2, expression: '어떤 수에서 220을 빼야 할 것을 잘못하여 더했더니 600이 되었습니다. 어떤 수를 구하시오.', answer: '380'},
+            {id:23, type:2, expression: '어떤 수에서 175을 빼야 할 것을 잘못하여 더했더니 450이 되었습니다. 어떤 수를 구하시오.', answer: '275'},
+            {id:24, type:2, expression: '어떤 수에서 130을 빼야 할 것을 잘못하여 더했더니 400이 되었습니다. 어떤 수를 구하시오.', answer: '270'},
+            {id:25, type:2, expression: '어떤 수에서 200을 빼야 할 것을 잘못하여 더했더니 700이 되었습니다. 어떤 수를 구하시오.', answer: '500'},
+            {id:26, type:2, expression: '어떤 수에서 185을 빼야 할 것을 잘못하여 더했더니 550이 되었습니다. 어떤 수를 구하시오.', answer: '365'},
+            {id:27, type:2, expression: '어떤 수에서 240을 빼야 할 것을 잘못하여 더했더니 800이 되었습니다. 어떤 수를 구하시오.', answer: '560'},
+            {id:28, type:2, expression: '어떤 수에서 160을 빼야 할 것을 잘못하여 더했더니 520이 되었습니다. 어떤 수를 구하시오.', answer: '360'},
+            {id:29, type:2, expression: '어떤 수에서 210을 빼야 할 것을 잘못하여 더했더니 630이 되었습니다. 어떤 수를 구하시오.', answer: '420'},
+            {id:30, type:2, expression: '어떤 수에서 195을 빼야 할 것을 잘못하여 더했더니 585이 되었습니다. 어떤 수를 구하시오.', answer: '390'},
+            {id:31, type:2, expression: '어떤 수에서 175을 빼야 할 것을 잘못하여 더했더니 525이 되었습니다. 어떤 수를 구하시오.', answer: '350'},
+            {id:32, type:2, expression: '어떤 수에서 210을 빼야 할 것을 잘못하여 더했더니 700이 되었습니다. 어떤 수를 구하시오.', answer: '490'},
+            {id:33, type:2, expression: '어떤 수에서 190을 빼야 할 것을 잘못하여 더했더니 760이 되었습니다. 어떤 수를 구하시오.', answer: '570'},
+            {id:34, type:2, expression: '어떤 수에서 225을 빼야 할 것을 잘못하여 더했더니 675이 되었습니다. 어떤 수를 구하시오.', answer: '450'},
+            {id:35, type:2, expression: '어떤 수에서 160을 빼야 할 것을 잘못하여 더했더니 480이 되었습니다. 어떤 수를 구하시오.', answer: '320'},
+            {id:36, type:2, expression: '어떤 수에서 185을 빼야 할 것을 잘못하여 더했더니 555이 되었습니다. 어떤 수를 구하시오.', answer: '370'},
+            {id:37, type:2, expression: '어떤 수에서 200을 빼야 할 것을 잘못하여 더했더니 800이 되었습니다. 어떤 수를 구하시오.', answer: '600'},
+            {id:38, type:2, expression: '어떤 수에서 175을 빼야 할 것을 잘못하여 더했더니 525이 되었습니다. 어떤 수를 구하시오.', answer: '350'},
+            {id:39, type:2, expression: '어떤 수에서 240을 빼야 할 것을 잘못하여 더했더니 720이 되었습니다. 어떤 수를 구하시오.', answer: '480'},
+            {id:40, type:2, expression: '어떤 수에서 210을 빼야 할 것을 잘못하여 더했더니 630이 되었습니다. 어떤 수를 구하시오.', answer: '420'},
+
+            // 유형3: 민수와 다른 인물들이 밤, 사과 등 주운 물건의 합계를 구하는 문제
+            // 유형3 문제 1~20
+            {id:41, type:3, expression: '민수는 아버지와 함께 밤을 주웠습니다. 아버지께서는 665개를 주웠고, 민수는 아버지보다 287개 적게 주웠습니다. 민수와 아버지가 주운 밤은 모두 몇 개인지 구하시오.', answer: '952'},
+            {id:42, type:3, expression: '민수는 어머니와 함께 사과를 주웠습니다. 어머니께서는 550개를 주웠고, 민수는 어머니보다 150개 적게 주웠습니다. 민수와 어머니가 주운 사과는 모두 몇 개인지 구하시오.', answer: '700'},
+            {id:43, type:3, expression: '민수는 할머니와 함께 도토리를 주웠습니다. 할머니께서는 480개를 주웠고, 민수는 할머니보다 120개 적게 주웠습니다. 민수와 할머니가 주운 도토리는 모두 몇 개인지 구하시오.', answer: '600'},
+            {id:44, type:3, expression: '민수는 삼촌과 함께 견과를 주웠습니다. 삼촌께서는 620개를 주웠고, 민수는 삼촌보다 220개 적게 주웠습니다. 민수와 삼촌이 주운 견과는 모두 몇 개인지 구하시오.', answer: '840'},
+            {id:45, type:3, expression: '민수는 고모와 함께 밤을 주웠습니다. 고모께서는 500개를 주웠고, 민수는 고모보다 180개 적게 주웠습니다. 민수와 고모가 주운 밤은 모두 몇 개인지 구하시오.', answer: '680'},
+            {id:46, type:3, expression: '민수는 이모와 함께 사과를 주웠습니다. 이모께서는 430개를 주웠고, 민수는 이모보다 90개 적게 주웠습니다. 민수와 이모가 주운 사과는 모두 몇 개인지 구하시오.', answer: '520'},
+            {id:47, type:3, expression: '민수는 오빠와 함께 도토리를 주웠습니다. 오빠께서는 570개를 주웠고, 민수는 오빠보다 170개 적게 주웠습니다. 민수와 오빠가 주운 도토리는 모두 몇 개인지 구하시오.', answer: '740'},
+            {id:48, type:3, expression: '민수는 누나와 함께 견과를 주웠습니다. 누나께서는 600개를 주웠고, 민수는 누나보다 200개 적게 주웠습니다. 민수와 누나가 주운 견과는 모두 몇 개인지 구하시오.', answer: '800'},
+            {id:49, type:3, expression: '민수는 아저씨와 함께 밤을 주웠습니다. 아저씨께서는 480개를 주웠고, 민수는 아저씨보다 120개 적게 주웠습니다. 민수와 아저씨가 주운 밤은 모두 몇 개인지 구하시오.', answer: '600'},
+            {id:50, type:3, expression: '민수는 할아버지와 함께 사과를 주웠습니다. 할아버지께서는 520개를 주웠고, 민수는 할아버지보다 220개 적게 주웠습니다. 민수와 할아버지가 주운 사과는 모두 몇 개인지 구하시오.', answer: '740'},
+            {id:51, type:3, expression: '민수는 이모부와 함께 도토리를 주웠습니다. 이모부께서는 350개를 주웠고, 민수는 이모부보다 90개 적게 주웠습니다. 민수와 이모부가 주운 도토리는 모두 몇 개인지 구하시오.', answer: '440'},
+            {id:52, type:3, expression: '민수는 누나와 함께 밤을 주웠습니다. 누나께서는 530개를 주웠고, 민수는 누나보다 170개 적게 주웠습니다. 민수와 누나가 주운 밤은 모두 몇 개인지 구하시오.', answer: '700'},
+            {id:53, type:3, expression: '민수는 고모와 함께 사과를 주웠습니다. 고모께서는 450개를 주웠고, 민수는 고모보다 150개 적게 주웠습니다. 민수와 고모가 주운 사과는 모두 몇 개인지 구하시오.', answer: '600'},
+            {id:54, type:3, expression: '민수는 아버지와 함께 견과를 주웠습니다. 아버지께서는 600개를 주웠고, 민수는 아버지보다 250개 적게 주웠습니다. 민수와 아버지가 주운 견과는 모두 몇 개인지 구하시오.', answer: '850'},
+            {id:55, type:3, expression: '민수는 고모부와 함께 밤을 주웠습니다. 고모부께서는 400개를 주웠고, 민수는 고모부보다 100개 적게 주웠습니다. 민수와 고모부가 주운 밤은 모두 몇 개인지 구하시오.', answer: '500'},
+            {id:56, type:3, expression: '민수는 오빠와 함께 도토리를 주웠습니다. 오빠께서는 580개를 주웠고, 민수는 오빠보다 200개 적게 주웠습니다. 민수와 오빠가 주운 도토리는 모두 몇 개인지 구하시오.', answer: '780'},
+            {id:57, type:3, expression: '민수는 누나와 함께 견과를 주웠습니다. 누나께서는 620개를 주웠고, 민수는 누나보다 220개 적게 주웠습니다. 민수와 누나가 주운 견과는 모두 몇 개인지 구하시오.', answer: '840'},
+            {id:58, type:3, expression: '민수는 이모와 함께 사과를 주웠습니다. 이모께서는 480개를 주웠고, 민수는 이모보다 120개 적게 주웠습니다. 민수와 이모가 주운 사과는 모두 몇 개인지 구하시오.', answer: '600'},
+            {id:59, type:3, expression: '민수는 할머니와 함께 도토리를 주웠습니다. 할머니께서는 530개를 주웠고, 민수는 할머니보다 170개 적게 주웠습니다. 민수와 할머니가 주운 도토리는 모두 몇 개인지 구하시오.', answer: '700'},
+            {id:60, type:3, expression: '민수는 삼촌과 함께 밤을 주웠습니다. 삼촌께서는 620개를 주웠고, 민수는 삼촌보다 220개 적게 주웠습니다. 민수와 삼촌이 주운 밤은 모두 몇 개인지 구하시오.', answer: '840'},
+
+        ];
+
+        let score = 0;
+        let chances = 3;
+        let totalTime = 0;
+        let selectedDifficulty = '하';
+        let usedProblems = [];
+        let currentProblem = null;
+        let timerInterval;
+        let energyInterval;
+        let totalTimerInterval;
+        let energyDuration = 0; // in seconds
+        let energyRemaining = 100; // percentage
+        let isTimeLimited = false;
+        let totalElapsedTime = 0; // in seconds
+
+        // Difficulty settings
+        const difficultySettings = {
+            '최상': {time: 20, points: 20},
+            '상': {time: 30, points: 15},
+            '중': {time: 40, points: 13},
+            '하': {time: 0, points: 10} // 0 for no limit
+        };
+
+        // DOM 요소
+        const scoreElement = document.getElementById('score');
+        const chancesElement = document.getElementById('chances');
+        const totalTimeElement = document.getElementById('total-time');
+        const questionElement = document.getElementById('question');
+        const choicesElement = document.getElementById('choices');
+        const energyBar = document.getElementById('energy-bar');
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const finalScoreElement = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
+        const popup = document.getElementById('popup');
+        const popupMessage = document.getElementById('popup-message');
+        const modalBg = document.getElementById('modal-bg');
+
+        // 선택지 버튼 클릭 시
+        choicesElement.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON') {
+                const selectedAnswer = e.target.getAttribute('data-answer');
+                checkAnswer(selectedAnswer);
+            }
+        });
+
+        // 난이도 선택
+        document.querySelectorAll('.difficulty-selection button').forEach(button => {
+            button.addEventListener('click', function() {
+                selectedDifficulty = this.getAttribute('data-difficulty');
+                startGame();
+            });
+        });
+
+        // 게임 다시 시작하기
+        restartButton.addEventListener('click', function() {
+            resetGame();
+            startScreen.classList.remove('hidden');
+            resultScreen.classList.add('hidden');
+        });
+
+        // 게임 시작 함수
+        function startGame() {
+            startScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            score = 0;
+            chances = 3;
+            totalElapsedTime = 0;
+            usedProblems = [];
+            updateScore();
+            updateChances();
+            updateTotalTime();
+            setupDifficulty();
+            startTotalTimer();
+            loadNextProblem();
+        }
+
+        // 게임 리셋 함수
+        function resetGame() {
+            clearInterval(timerInterval);
+            clearInterval(energyInterval);
+            clearInterval(totalTimerInterval);
+            energyBar.style.width = '100%';
+            energyRemaining = 100;
+        }
+
+        // 난이도 설정 함수
+        function setupDifficulty() {
+            const settings = difficultySettings[selectedDifficulty];
+            if (settings.time > 0) {
+                isTimeLimited = true;
+                energyDuration = settings.time;
+                resetEnergyBar();
+                startEnergyTimer();
+            } else {
+                isTimeLimited = false;
+                energyBar.style.width = '100%';
+            }
+        }
+
+        // 전체 게임 시간 타이머 시작
+        function startTotalTimer() {
+            totalTimerInterval = setInterval(() => {
+                totalElapsedTime++;
+                updateTotalTimeDisplay();
+            }, 1000);
+        }
+
+        // 전체 게임 시간 업데이트
+        function updateTotalTimeDisplay() {
+            const minutes = Math.floor(totalElapsedTime / 60).toString().padStart(2, '0');
+            const seconds = (totalElapsedTime % 60).toString().padStart(2, '0');
+            totalTimeElement.textContent = `${minutes}:${seconds}`;
+        }
+
+        // 에너지 바 리셋
+        function resetEnergyBar() {
+            energyRemaining = 100;
+            energyBar.style.width = '100%';
+        }
+
+        // 에너지 타이머 시작
+        function startEnergyTimer() {
+            clearInterval(energyInterval);
+            const settings = difficultySettings[selectedDifficulty];
+            energyDuration = settings.time;
+            energyInterval = setInterval(() => {
+                energyRemaining -= (100 / energyDuration) / 10; // 매 100ms마다 1/10초에 해당하는 감소
+                if (energyRemaining <= 0) {
+                    energyRemaining = 0;
+                    energyBar.style.width = '0%';
+                    clearInterval(energyInterval);
+                    handleTimeout();
+                } else {
+                    energyBar.style.width = `${energyRemaining}%`;
+                }
+            }, 100); // 100ms마다 업데이트
+        }
+
+        // 시간 초과 처리
+        function handleTimeout() {
+            decreaseChance();
+            showCorrectAnswer(true); // 시간 초과이므로 정답 표시
+            triggerRareChance();
+            loadNextProblem();
+        }
+
+        // 점수 업데이트
+        function updateScore() {
+            scoreElement.textContent = score;
+        }
+
+        // 기회 업데이트
+        function updateChances() {
+            chancesElement.textContent = chances;
+            if (chances <= 0) {
+                endGame();
+            }
+        }
+
+        // 전체 시간 업데이트 (이미 startTotalTimer에서 관리)
+        function updateTotalTime() {
+            // 함수 내용 제거 (이미 updateTotalTimeDisplay가 있음)
+        }
+
+        // 다음 문제 로드
+        function loadNextProblem() {
+            if (usedProblems.length === problems.length) {
+                usedProblems = []; // 모든 문제를 사용했으면 초기화
+            }
+
+            let problem;
+            do {
+                const randomIndex = Math.floor(Math.random() * problems.length);
+                problem = problems[randomIndex];
+            } while (usedProblems.includes(problem.id));
+
+            usedProblems.push(problem.id);
+            currentProblem = problem;
+            displayProblem(problem);
+        }
+
+        // 문제 표시 함수
+        function displayProblem(problem) {
+            questionElement.innerHTML = `\\(${problem.expression}\\)`;
+            generateChoices(problem);
+            MathJax.typesetPromise(); // MathJax 렌더링
+            resetEnergyTimer();
+        }
+
+        // 선택지 생성 함수
+        function generateChoices(problem) {
+            const correctAnswer = problem.answer;
+            const incorrectAnswers = generateIncorrectAnswers(correctAnswer, problem.type);
+            // Combine and shuffle
+            const allChoices = [...incorrectAnswers, correctAnswer];
+            shuffleArray(allChoices);
+            // Clear previous choices
+            choicesElement.innerHTML = '';
+            // Create buttons
+            allChoices.forEach(choice => {
+                const button = document.createElement('button');
+                button.setAttribute('data-answer', choice);
+                // Format answer for MathJax
+                let displayAnswer = choice;
+                if (isFraction(choice)) {
+                    displayAnswer = `\\(\\dfrac{${getNumerator(choice)}}{${getDenominator(choice)}}\\)`;
+                } else {
+                    displayAnswer = `\\(${choice}\\)`;
+                }
+                button.innerHTML = displayAnswer;
+                choicesElement.appendChild(button);
+            });
+            MathJax.typesetPromise(); // MathJax 렌더링
+        }
+
+        // 정답 검사 함수
+        function checkAnswer(selectedAnswer) {
+            clearInterval(energyInterval);
+            const correctAnswer = currentProblem.answer;
+            if (selectedAnswer === correctAnswer) {
+                // 정답
+                score += difficultySettings[selectedDifficulty].points;
+                updateScore();
+                triggerRareChance();
+                loadNextProblem();
+            } else {
+                // 오답
+                decreaseChance();
+                showCorrectAnswer(false);
+                triggerRareChance();
+                loadNextProblem();
+            }
+        }
+
+        // 정답 표시 함수
+        // isTimeout: true면 시간 초과로 인한 정답 표시
+        function showCorrectAnswer(isTimeout) {
+            let message = '';
+            if (isTimeout) {
+                message = `시간이 초과되었습니다. 정답은 \\(${currentProblem.answer}\\) 입니다.`;
+            } else {
+                message = `틀렸습니다. 정답은 \\(${currentProblem.answer}\\) 입니다.`;
+            }
+            popupMessage.innerHTML = message;
+            openPopup();
+        }
+
+        // 기회 감소 함수
+        function decreaseChance() {
+            chances--;
+            updateChances();
+        }
+
+        // 게임 종료 함수
+        function endGame() {
+            clearInterval(energyInterval);
+            clearInterval(timerInterval);
+            clearInterval(totalTimerInterval);
+            finalScoreElement.textContent = score;
+            gameScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+        }
+
+        // 배열 섞기 함수 (Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length -1; i >0; i--){
+                const j = Math.floor(Math.random() * (i+1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // 팝업 열기 함수
+        function openPopup() {
+            popup.classList.remove('hidden');
+            modalBg.style.display = 'block';
+            MathJax.typesetPromise(); // MathJax 렌더링
+        }
+
+        // 팝업 닫기 함수
+        function closePopup() {
+            popup.classList.add('hidden');
+            modalBg.style.display = 'none';
+        }
+
+        // 잘못된 계산으로 인한 정답 표시 여부를 위한 선택지
+        function resetEnergyTimer() {
+            if (isTimeLimited) {
+                clearInterval(energyInterval);
+                startEnergyTimer();
+            }
+        }
+
+        // 정답이 분수인지 확인
+        function isFraction(answer) {
+            return answer.includes('/') && !answer.includes('.');
+        }
+
+        // 분수의 분자 추출
+        function getNumerator(fraction) {
+            if (fraction.startsWith('\\dfrac{')) {
+                return fraction.split('{')[1].split('}')[0];
+            }
+            return fraction.split('/')[0];
+        }
+
+        // 분수의 분모 추출
+        function getDenominator(fraction) {
+            if (fraction.startsWith('\\dfrac{')) {
+                return fraction.split('{')[2].split('}')[0];
+            }
+            return fraction.split('/')[1];
+        }
+
+        // 보상 시스템
+        function triggerRareChance() {
+            const rand = Math.floor(Math.random() * 10000) +1; // 1 to 10000
+            if (rand === 1) { // 1/10000
+                showPrize("5000원 상품권");
+            } else if (rand === 2) { // 1/5000 (since rand ===2 is also 1/10000)
+                // To match the user's original instruction: 1/500, 1/1000, 1/10000
+                // Modify the conditions accordingly
+                // Correct probabilities:
+                // 1/500: rand <= 20 (assuming 10000 total)
+                // 1/1000: rand <= 10
+                // 1/10000: rand ===1
+                if (rand <= 20) { // 1/500
+                    showPrize("1회 면제권");
+                }
+                if (rand <= 10) { // 1/1000
+                    showPrize("3000원 상품권");
+                }
+                if (rand ===1) { // 1/10000
+                    showPrize("5000원 상품권");
+                }
+            }
+        }
+
+        // 보상 표시 함수
+        function showPrize(prize) {
+            popupMessage.innerHTML = `축하합니다! <strong>${prize}</strong>를 획득하셨습니다!`;
+            openPopup();
+        }
+
+        // 초기화 함수 (옵션)
+        function initialize() {
+            // 아무 작업 필요 없음
+        }
+
+        // 게임 데이터에 따른 선택지 생성 함수 (유형별 다르게)
+        // 현재 문제의 유형을 고려하여 답을 생성하는 로직 필요
+        function generateIncorrectAnswers(correctAnswer, type) {
+            const incorrect = new Set();
+            while (incorrect.size < 3) {
+                let fake;
+                if (type ===1 || type ===2) {
+                    // 유형1, 유형2: 정답은 숫자 (possibly fraction)
+                    if (isFraction(correctAnswer)) {
+                        // 생성할 오답도 분수 형태로
+                        const numerator = Math.floor(Math.random() * 20) +1;
+                        const denominator = Math.floor(Math.random() * 20) +1;
+                        fake = `\\dfrac{${numerator}}{${denominator}}`;
+                    } else {
+                        // 정답이 정수인 경우
+                        fake = (parseInt(correctAnswer) + Math.floor(Math.random() * 40) - 20).toString();
+                        // Ensure no duplicates or negative numbers
+                        if (fake <=0) fake = (parseInt(correctAnswer) + Math.floor(Math.random() * 20) +1).toString();
+                    }
+                } else if (type ===3) {
+                    // 유형3: 합계를 구하는 문제 (정답은 합계)
+                    fake = (parseInt(correctAnswer) + Math.floor(Math.random() * 100) - 50).toString();
+                    if (fake <=0) fake = (parseInt(correctAnswer) + Math.floor(Math.random() * 50) +1).toString();
+                }
+                // Prevent duplicates
+                if (fake !== correctAnswer && !incorrect.has(fake)) {
+                    incorrect.add(fake);
+                }
+            }
+            return Array.from(incorrect);
+        }
+
+        // 게임 시작 시 초기화
+        initialize();
+    </script>
+</body>
+</html>
